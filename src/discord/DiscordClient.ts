@@ -110,13 +110,13 @@ export class DiscordClient {
                 const readyData = data as GatewayReadyDispatchData;
                 Logger.success(`✓ Logged in as: ${readyData.user.username}`);
                 this.sessionId = readyData.session_id;
-                Logger.info(`🔍 Monitoring channel: ${this.config.getChannelId()}`);
+                Logger.info(`🔍 Monitoring ${this.config.getChannelIds().length} channel(s): ${this.config.getChannelIds().join(', ')}`);
                 break;
 
             case GatewayDispatchEvents.MessageCreate:
                 const messageData = data as GatewayMessageCreateDispatchData;
-                if (messageData.channel_id === this.config.getChannelId() && messageData.attachments.length > 0) {
-                    Logger.info(`📨 New message with ${messageData.attachments.length} attachment(s) from ${messageData.author.username}`);
+                if (this.config.isMonitoredChannel(messageData.channel_id) && messageData.attachments.length > 0) {
+                    Logger.info(`📨 New message with ${messageData.attachments.length} attachment(s) from ${messageData.author.username} in channel ${messageData.channel_id}`);
                     this.mediaProcessor.processAttachments(messageData.attachments, messageData.author.username, messageData.timestamp);
                 }
                 break;

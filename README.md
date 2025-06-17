@@ -15,8 +15,10 @@ Automatically downloads media files (images and videos) from a specified Discord
 ## Environment Variables
 
 - `DISCORD_TOKEN`: Your Discord bot token (required)
-- `CHANNEL_ID`: The Discord channel ID to monitor (required)
-- `SAVE_DIRECTORY`: Directory to save media files (default: `/media`)
+- `CHANNEL_ID`: Discord channel ID(s) to monitor (required)
+  - Single channel: `"123456789012345678"`
+  - Multiple channels: `"123456789012345678,987654321098765432,555666777888999000"`
+- `SAVE_DIRECTORY`: Directory to save media files (default: `./media`)
 
 ## Installation
 
@@ -28,7 +30,13 @@ Automatically downloads media files (images and videos) from a specified Discord
 2. Set environment variables:
    ```bash
    export DISCORD_TOKEN="your_token"
-   export CHANNEL_ID="your_channel_id"
+   
+   # Single channel
+   export CHANNEL_ID="123456789012345678"
+   
+   # Or multiple channels (comma-separated)
+   export CHANNEL_ID="123456789012345678,987654321098765432,555666777888999000"
+   
    export SAVE_DIRECTORY="./media"  # optional
    ```
 

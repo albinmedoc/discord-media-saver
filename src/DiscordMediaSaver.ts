@@ -44,7 +44,13 @@ export class DiscordMediaSaver {
     async init(): Promise<void> {
         Logger.info('🚀 Starting Discord Media Saver...');
         Logger.info(`📁 Save directory: ${this.config.getSaveDirectory()}`);
-        Logger.info(`📺 Channel ID: ${this.config.getChannelId()}`);
+        
+        const channelIds = this.config.getChannelIds();
+        if (channelIds.length === 1) {
+            Logger.info(`📺 Monitoring channel: ${channelIds[0]}`);
+        } else {
+            Logger.info(`📺 Monitoring ${channelIds.length} channels: ${channelIds.join(', ')}`);
+        }
         
         await this.discordClient.connect();
     }

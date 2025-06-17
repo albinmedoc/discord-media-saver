@@ -14,7 +14,7 @@ import * as fs from 'fs';
  */
 export class Config {
     private readonly token: string;
-    private readonly channelId: string;
+    private readonly channelIds: string[];
     private readonly saveDirectory: string;
 
     /**
@@ -24,11 +24,29 @@ export class Config {
      */
     constructor() {
         this.token = process.env.DISCORD_TOKEN || '';
-        this.channelId = process.env.CHANNEL_ID || '';
+        this.channelIds = this.parseChannelIds(process.env.CHANNEL_ID || '');
         this.saveDirectory = process.env.SAVE_DIRECTORY || './media';
         
         this.validateConfig();
         this.ensureDirectoryExists();
+    }
+
+    /**
+     * Parse channel IDs from environment variable (comma-separated)
+     * 
+     * @private
+     * @param {string} channelIdString - Comma-separated channel IDs
+     * @returns {string[]} Array of channel IDs
+     */
+    private parseChannelIds(channelIdString: string): string[] {
+        if (!channelIdString.trim()) {
+            return [];
+        }
+        
+        return channelIdString
+            .split(',')
+            .map(id => id.trim())
+            .filter(id => id.length > 0);
     }
 
     /**
@@ -43,15 +61,18 @@ export class Config {
             process.exit(1);
         }
 
-        if (!this.channelId) {
+        if (this.channelIds.length === 0) {
             console.error('❌ CHANNEL_ID environment variable is required!');
+            console.error('   Format: "123456789012345678" or "123456789012345678,987654321098765432"');
             process.exit(1);
         }
 
-        // Validate channel ID format (should be a snowflake)
-        if (!/^\d{17,19}$/.test(this.channelId)) {
-            console.error('❌ CHANNEL_ID must be a valid Discord snowflake (17-19 digits)');
-            process.exit(1);
+        // Validate each channel ID format (should be a snowflake)
+        for (const channelId of this.channelIds) {
+            if (!/^\d{17,19}$/.test(channelId)) {
+                console.error(`❌ Invalid CHANNEL_ID: "${channelId}" must be a valid Discord snowflake (17-19 digits)`);
+                process.exit(1);
+            }
         }
     }
 
@@ -76,12 +97,22 @@ export class Config {
     }
 
     /**
-     * Get the Discord channel ID to monitor
+     * Get the Discord channel IDs to monitor
      * 
-     * @returns {string} The Discord channel ID
+     * @returns {string[]} Array of Discord channel IDs
      */
-    getChannelId(): string {
-        return this.channelId;
+    getChannelIds(): string[] {
+        return this.channelIds;
+    }
+
+    /**
+     * Check if a channel ID is being monitored
+     * 
+     * @param {string} channelId - The channel ID to check
+     * @returns {boolean} True if the channel is being monitored
+     */
+    isMonitoredChannel(channelId: string): boolean {
+        return this.channelIds.includes(channelId);
     }
 
     /**
