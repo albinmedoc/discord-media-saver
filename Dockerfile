@@ -15,6 +15,9 @@ RUN pnpm install --frozen-lockfile --prod
 # Copy source code
 COPY src/ ./src/
 
+# Set default environment variable
+ENV SAVE_DIRECTORY=/media
+
 # Create directory for saved files
 RUN mkdir -p /media
 
