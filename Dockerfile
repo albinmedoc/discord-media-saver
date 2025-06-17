@@ -3,7 +3,7 @@ FROM node:18-alpine
 # Install pnpm globally
 RUN npm install -g pnpm
 
-WORKDIR /app
+WORKDIR /usr/src/app
 
 # Copy package files
 COPY package*.json ./
