@@ -14,7 +14,7 @@ Automatically downloads media files (images and videos) from a specified Discord
 
 - `DISCORD_TOKEN`: Your Discord bot token (required)
 - `CHANNEL_ID`: The Discord channel ID to monitor (required)
-- `SAVE_DIRECTORY`: Directory to save media files (default: `./media`)
+- `SAVE_DIRECTORY`: Directory to save media files (default: `/media`)
 
 ## Installation
 
@@ -27,7 +27,7 @@ Automatically downloads media files (images and videos) from a specified Discord
    ```bash
    export DISCORD_TOKEN="your_bot_token"
    export CHANNEL_ID="your_channel_id"
-   export SAVE_DIRECTORY="./media"  # optional
+   export SAVE_DIRECTORY="/media"  # optional
    ```
 
 3. Run the application:
@@ -44,7 +44,7 @@ docker run -d \
   -e DISCORD_TOKEN="your_bot_token" \
   -e CHANNEL_ID="your_channel_id" \
   -e SAVE_DIRECTORY="/media" \
-  -v ./media:/media \
+  -v /media:/media \
   albinmedoc/discord-media-saver:latest
 ```
 

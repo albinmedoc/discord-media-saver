@@ -7,7 +7,7 @@ class Config {
     constructor() {
         this.token = process.env.DISCORD_TOKEN;
         this.channelId = process.env.CHANNEL_ID;
-        this.saveDirectory = process.env.SAVE_DIRECTORY || './media';
+        this.saveDirectory = process.env.SAVE_DIRECTORY || '/media';
         
         this.validateConfig();
         this.ensureDirectoryExists();
