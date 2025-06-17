@@ -1,10 +1,10 @@
-const DiscordMediaSaver = require('./DiscordMediaSaver');
-const Logger = require('./utils/Logger');
+import DiscordMediaSaver from './DiscordMediaSaver';
+import { Logger } from './utils/Logger';
 
 /**
  * Application entry point
  */
-async function main() {
+async function main(): Promise<void> {
     const saver = new DiscordMediaSaver();
     
     // Handle graceful shutdown
@@ -27,7 +27,7 @@ async function main() {
         process.stdin.resume();
         
     } catch (error) {
-        Logger.error('❌ Error:', error);
+        Logger.error('❌ Error:', error as Error);
         saver.cleanup();
         process.exit(1);
     }

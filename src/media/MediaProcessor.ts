@@ -1,21 +1,24 @@
-const fs = require('fs');
-const path = require('path');
-const https = require('https');
-const FileUtils = require('../utils/FileUtils');
-const Logger = require('../utils/Logger');
+import * as fs from 'fs';
+import * as path from 'path';
+import * as https from 'https';
+import type { APIAttachment } from 'discord-api-types/v9';
+import { FileUtils } from '../utils/FileUtils';
+import { Logger } from '../utils/Logger';
 
 /**
  * Handles media processing and downloading
  */
-class MediaProcessor {
-    constructor(saveDirectory) {
+export class MediaProcessor {
+    private readonly saveDirectory: string;
+
+    constructor(saveDirectory: string) {
         this.saveDirectory = saveDirectory;
     }
 
     /**
      * Process attachments from a Discord message
      */
-    async processAttachments(attachments, username, timestamp) {
+    async processAttachments(attachments: APIAttachment[], username: string, timestamp: string): Promise<void> {
         for (const attachment of attachments) {
             const isMedia = FileUtils.isMediaFile(attachment.filename, attachment.content_type);
             
@@ -30,7 +33,7 @@ class MediaProcessor {
     /**
      * Download a single attachment
      */
-    async downloadAttachment(attachment, username, timestamp) {
+    private async downloadAttachment(attachment: APIAttachment, username: string, timestamp: string): Promise<void> {
         try {
             const filename = FileUtils.generateSafeFilename(attachment, username, timestamp);
             const filepath = path.join(this.saveDirectory, filename);
@@ -42,14 +45,14 @@ class MediaProcessor {
             Logger.success(`✓ Saved: ${filename}`);
             
         } catch (error) {
-            Logger.error(`❌ Could not download ${attachment.filename}:`, error);
+            Logger.error(`❌ Could not download ${attachment.filename}:`, error as Error);
         }
     }
 
     /**
      * Download a file from URL to local path
      */
-    downloadFile(url, filepath) {
+    private downloadFile(url: string, filepath: string): Promise<void> {
         return new Promise((resolve, reject) => {
             const file = fs.createWriteStream(filepath);
             
@@ -78,5 +81,3 @@ class MediaProcessor {
         });
     }
 }
-
-module.exports = MediaProcessor;

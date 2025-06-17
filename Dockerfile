@@ -10,10 +10,14 @@ COPY package*.json ./
 COPY pnpm-lock.yaml* ./
 
 # Install dependencies with pnpm
-RUN pnpm install --frozen-lockfile --prod
+RUN pnpm install --frozen-lockfile
 
 # Copy source code
 COPY src/ ./src/
+COPY tsconfig.json ./
+
+# Build TypeScript
+RUN pnpm run build
 
 # Set default environment variable
 ENV SAVE_DIRECTORY=/media

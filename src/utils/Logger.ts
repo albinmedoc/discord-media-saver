@@ -1,12 +1,12 @@
 /**
  * Simple logger utility
  */
-class Logger {
-    static info(message) {
+export class Logger {
+    static info(message: string): void {
         console.log(message);
     }
 
-    static error(message, error = null) {
+    static error(message: string, error?: Error | null): void {
         if (error) {
             console.error(message, error.message);
         } else {
@@ -14,13 +14,11 @@ class Logger {
         }
     }
 
-    static warn(message) {
+    static warn(message: string): void {
         console.warn(message);
     }
 
-    static success(message) {
+    static success(message: string): void {
         console.log(message);
     }
 }
-
-module.exports = Logger;

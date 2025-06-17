@@ -1,14 +1,15 @@
-const fs = require('fs');
-const path = require('path');
+import * as fs from 'fs';
+import * as path from 'path';
+import type { APIAttachment } from 'discord-api-types/v9';
 
 /**
  * File utility functions
  */
-class FileUtils {
+export class FileUtils {
     /**
      * Check if a file is a media file based on filename and content type
      */
-    static isMediaFile(filename, contentType) {
+    static isMediaFile(filename: string, contentType?: string): boolean {
         const mediaExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.mov', '.avi', '.mkv', '.webm'];
         const mediaContentTypes = ['image/', 'video/'];
         
@@ -16,9 +17,9 @@ class FileUtils {
             filename.toLowerCase().endsWith(ext)
         );
         
-        const hasMediaContentType = contentType && mediaContentTypes.some(type => 
+        const hasMediaContentType = contentType ? mediaContentTypes.some(type => 
             contentType.startsWith(type)
-        );
+        ) : false;
 
         return hasMediaExtension || hasMediaContentType;
     }
@@ -26,7 +27,7 @@ class FileUtils {
     /**
      * Generate a safe filename for downloaded media
      */
-    static generateSafeFilename(attachment, username, timestamp) {
+    static generateSafeFilename(attachment: APIAttachment, username: string, timestamp: string): string {
         const date = new Date(timestamp);
         const dateStr = date.toISOString().slice(0, 19).replace(/[:.]/g, '-');
         
@@ -41,7 +42,7 @@ class FileUtils {
     /**
      * Format file size in human readable format
      */
-    static formatFileSize(bytes) {
+    static formatFileSize(bytes: number): string {
         if (bytes === 0) return '0 B';
         const k = 1024;
         const sizes = ['B', 'KB', 'MB', 'GB'];
@@ -52,9 +53,7 @@ class FileUtils {
     /**
      * Remove a file safely (ignores errors)
      */
-    static removeFileSafely(filepath) {
+    static removeFileSafely(filepath: string): void {
         fs.unlink(filepath, () => {}); // Ignore errors
     }
 }
-
-module.exports = FileUtils;

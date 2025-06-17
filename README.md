@@ -4,6 +4,8 @@ Automatically downloads media files (images and videos) from a specified Discord
 
 ## Features
 
+- **TypeScript**: Fully typed with Discord API types for better reliability
+- **Modular Architecture**: Clean separation of concerns with dependency injection
 - **Automatic Reconnection**: Handles Discord WebSocket disconnections gracefully
 - **Media Filtering**: Only downloads image and video files
 - **Safe Filenames**: Generates safe filenames with timestamps and usernames
@@ -25,14 +27,21 @@ Automatically downloads media files (images and videos) from a specified Discord
 
 2. Set environment variables:
    ```bash
-   export DISCORD_TOKEN="your_bot_token"
+   export DISCORD_TOKEN="your_token"
    export CHANNEL_ID="your_channel_id"
-   export SAVE_DIRECTORY="/media"  # optional
+   export SAVE_DIRECTORY="./media"  # optional
    ```
 
-3. Run the application:
+3. Build and run the application:
    ```bash
+   # Build TypeScript to JavaScript
+   pnpm run build
+   
+   # Run the compiled application
    pnpm start
+   
+   # Or run directly with TypeScript (development)
+   pnpm run dev
    ```
 
 ## Docker Usage
@@ -41,7 +50,7 @@ Run the pre-built image:
 ```bash
 docker run -d \
   --name discord-media-saver \
-  -e DISCORD_TOKEN="your_bot_token" \
+  -e DISCORD_TOKEN="your_token" \
   -e CHANNEL_ID="your_channel_id" \
   -e SAVE_DIRECTORY="/media" \
   -v /media:/media \
