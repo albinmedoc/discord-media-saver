@@ -1,0 +1,15 @@
+{
+  "name": "discord-media-saver",
+  "version": "1.0.0",
+  "description": "Automatic media download from Discord channel",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "ws": "^8.14.0"
+  },
+  "keywords": ["discord", "media", "automation"],
+  "author": "Albin Médoc",
+  "license": "MIT"
+}
