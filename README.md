@@ -37,11 +37,16 @@ Automatically downloads media files (images and videos) from a specified Discord
 
 ## Docker Usage
 
-1. Update environment variables in `docker-compose.yaml`
-2. Run with Docker Compose:
-   ```bash
-   docker-compose up -d
-   ```
+Run the pre-built image:
+```bash
+docker run -d \
+  --name discord-media-saver \
+  -e DISCORD_TOKEN="your_bot_token" \
+  -e CHANNEL_ID="your_channel_id" \
+  -e SAVE_DIRECTORY="/media" \
+  -v ./media:/media \
+  albinmedoc/discord-media-saver:latest
+```
 
 ## Supported Media Types
 
