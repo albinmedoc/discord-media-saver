@@ -1,6 +1,7 @@
 import * as http from 'http';
 import * as url from 'url';
 import { Logger } from '../utils/Logger';
+import { DuplicateDetectionService } from '../deduplication/DuplicateDetectionService';
 
 /**
  * Health status interface
@@ -8,6 +9,19 @@ import { Logger } from '../utils/Logger';
 export interface HealthStatus {
     status: 'healthy' | 'unhealthy';
     timestamp: number;
+    discord: {
+        connected: boolean;
+        lastHeartbeat: number | null;
+        reconnectCount: number;
+    };
+    duplicateDetection: {
+        enabled: boolean;
+        cacheSize: number;
+        maxCacheSize: number;
+        totalFilesInDatabase: number;
+    };
+    uptime: number;
+    version: string;
 }
 
 /**
@@ -25,6 +39,7 @@ export class HealthCheckServer {
         lastHeartbeat: number | null;
         reconnectCount: number;
     };
+    private duplicateDetection: DuplicateDetectionService | null = null;
 
     constructor(port: number = 8080) {
         this.port = port;
@@ -38,6 +53,13 @@ export class HealthCheckServer {
         this.server = http.createServer((req, res) => {
             this.handleRequest(req, res);
         });
+    }
+
+    /**
+     * Set the duplicate detection service for health monitoring
+     */
+    setDuplicateDetectionService(service: DuplicateDetectionService): void {
+        this.duplicateDetection = service;
     }
 
     /**
@@ -58,7 +80,10 @@ export class HealthCheckServer {
                 this.handleRoot(res);
                 break;
             case '/health':
-                this.handleHealth(res);
+                this.handleHealth(res).catch(error => {
+                    Logger.error('Error handling health check:', error as Error);
+                    this.sendResponse(res, 503, { error: 'Internal Server Error' });
+                });
                 break;
             default:
                 this.sendResponse(res, 404, { error: 'Not Found' });
@@ -81,13 +106,19 @@ export class HealthCheckServer {
     /**
      * Handle basic health check endpoint
      */
-    private handleHealth(res: http.ServerResponse): void {
-        const status = this.getHealthStatus();
-        const httpStatus = status.status === 'healthy' ? 200 : 503;
-        this.sendResponse(res, httpStatus, {
-            status: status.status,
-            timestamp: status.timestamp
-        });
+    private async handleHealth(res: http.ServerResponse): Promise<void> {
+        try {
+            const status = await this.getHealthStatus();
+            const httpStatus = status.status === 'healthy' ? 200 : 503;
+            this.sendResponse(res, httpStatus, status);
+        } catch (error) {
+            Logger.error('Error getting health status:', error as Error);
+            this.sendResponse(res, 503, {
+                status: 'unhealthy',
+                timestamp: Date.now(),
+                error: 'Failed to get health status'
+            });
+        }
     }
 
     /**
@@ -102,7 +133,7 @@ export class HealthCheckServer {
     /**
      * Get comprehensive health status
      */
-    private getHealthStatus(): HealthStatus {
+    private async getHealthStatus(): Promise<HealthStatus> {
         const now = Date.now();
         const heartbeatAge = this.discordStatus.lastHeartbeat ? 
             now - this.discordStatus.lastHeartbeat : null;
@@ -113,9 +144,33 @@ export class HealthCheckServer {
         const isHealthy = this.discordStatus.connected && 
             (heartbeatAge === null || heartbeatAge < 120000);
 
+        // Get duplicate detection stats
+        let duplicateDetectionStats = {
+            enabled: false,
+            cacheSize: 0,
+            maxCacheSize: 0,
+            totalFilesInDatabase: 0
+        };
+
+        if (this.duplicateDetection) {
+            try {
+                duplicateDetectionStats = await this.duplicateDetection.getStats();
+            } catch (error) {
+                Logger.error('Error getting duplicate detection stats:', error as Error);
+            }
+        }
+
         return {
             status: isHealthy ? 'healthy' : 'unhealthy',
-            timestamp: now
+            timestamp: now,
+            discord: {
+                connected: this.discordStatus.connected,
+                lastHeartbeat: this.discordStatus.lastHeartbeat,
+                reconnectCount: this.discordStatus.reconnectCount
+            },
+            duplicateDetection: duplicateDetectionStats,
+            uptime: now - this.startTime,
+            version: '1.0.0'
         };
     }
 

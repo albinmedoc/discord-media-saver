@@ -4,12 +4,17 @@
   "description": "Automatic media download from Discord channel",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "pnpm run db:generate && tsc",
     "start": "node dist/index.js",
     "dev": "ts-node src/index.ts",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "db:generate": "prisma generate --schema=src/prisma/schema.prisma",
+    "db:push": "prisma db push --schema=src/prisma/schema.prisma",
+    "db:migrate": "prisma migrate dev --schema=src/prisma/schema.prisma",
+    "db:studio": "prisma studio --schema=src/prisma/schema.prisma"
   },
   "dependencies": {
+    "@prisma/client": "^6.10.0",
     "discord-api-types": "^0.38.12",
     "ws": "^8.14.0"
   },
@@ -23,6 +28,7 @@
   "devDependencies": {
     "@types/node": "^24.0.3",
     "@types/ws": "^8.18.1",
+    "prisma": "^6.10.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   }

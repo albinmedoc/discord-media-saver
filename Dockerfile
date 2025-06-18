@@ -1,7 +1,7 @@
 FROM node:18-alpine
 
-# Install pnpm globally
-RUN npm install -g pnpm
+# Install pnpm globally and wget for health checks
+RUN npm install -g pnpm && apk add --no-cache wget
 
 WORKDIR /usr/src/app
 
@@ -12,12 +12,17 @@ COPY pnpm-lock.yaml* ./
 # Install dependencies with pnpm
 RUN pnpm install --frozen-lockfile
 
-# Copy source code
+# Copy source code and Prisma schema
 COPY src/ ./src/
 COPY tsconfig.json ./
+COPY docker-entrypoint.sh ./
 
-# Build TypeScript
-RUN pnpm run build
+# Make entrypoint script executable
+RUN chmod +x docker-entrypoint.sh
+
+# Build TypeScript and copy generated files
+RUN pnpm run build && cp -r src/generated dist/
+
 
 # Set default environment variables
 ENV SAVE_DIRECTORY=/media
@@ -36,4 +41,5 @@ VOLUME ["/media"]
 HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
 
-CMD ["pnpm", "start"]
+# Use custom entrypoint that sets up database schema
+ENTRYPOINT ["./docker-entrypoint.sh"]
