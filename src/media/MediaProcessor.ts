@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as https from 'https';
-import type { APIAttachment } from 'discord-api-types/v9';
+import type { APIAttachment, GatewayMessageCreateDispatchData } from 'discord-api-types/v9';
 import { FileUtils } from '../utils/FileUtils';
 import { Logger } from '../utils/Logger';
 import { DuplicateDetectionService } from '../deduplication/DuplicateDetectionService';
@@ -22,7 +22,15 @@ export class MediaProcessor {
     /**
      * Process attachments from a Discord message
      */
-    async processAttachments(attachments: APIAttachment[], username: string, timestamp: string): Promise<void> {
+    async processAttachments(messageData: GatewayMessageCreateDispatchData): Promise<void> {
+        const { attachments, author, timestamp } = messageData;
+        
+        // Check if user is blacklisted
+        if (this.config.isUserBlacklisted(author.id)) {
+            Logger.info(`🚫 Skipping attachments from blacklisted user: ${author.username} (${author.id})`);
+            return;
+        }
+
         for (const attachment of attachments) {
             const isMedia = FileUtils.isMediaFile(attachment.filename, attachment.content_type);
             
@@ -44,7 +52,7 @@ export class MediaProcessor {
                 continue;
             }
 
-            await this.downloadAttachment(attachment, username, timestamp);
+            await this.downloadAttachment(attachment, author.username, timestamp);
         }
     }
 
