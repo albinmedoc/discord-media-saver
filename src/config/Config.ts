@@ -24,6 +24,7 @@ export class Config {
     private readonly maxImageSize: number;
     private readonly minVideoSize: number;
     private readonly maxVideoSize: number;
+    private readonly blacklistedUserIds: string[];
 
     /**
      * Initialize configuration from environment variables
@@ -43,6 +44,9 @@ export class Config {
         this.maxImageSize = FileUtils.parseFileSize(process.env.MAX_IMAGE_SIZE, 50 * 1024 * 1024); // 50MB default
         this.minVideoSize = FileUtils.parseFileSize(process.env.MIN_VIDEO_SIZE, 0);
         this.maxVideoSize = FileUtils.parseFileSize(process.env.MAX_VIDEO_SIZE, 500 * 1024 * 1024); // 500MB default
+        
+        // Blacklisted user IDs
+        this.blacklistedUserIds = this.parseUserIds(process.env.BLACKLISTED_USER_IDS || '');
         
         this.validateConfig();
         this.ensureDirectoryExists();
@@ -64,6 +68,24 @@ export class Config {
             .split(',')
             .map(id => id.trim())
             .filter(id => id.length > 0);
+    }
+
+    /**
+     * Parse user IDs from environment variable (comma-separated)
+     * 
+     * @private
+     * @param {string} userIdString - Comma-separated user IDs
+     * @returns {string[]} Array of user IDs
+     */
+    private parseUserIds(userIdString: string): string[] {
+        if (!userIdString.trim()) {
+            return [];
+        }
+
+        return userIdString
+            .split(',')
+            .map(id => id.trim())
+            .filter(id => id.length > 0 && /^\d{17,19}$/.test(id)); // Validate Discord snowflake format
     }
 
     /**
@@ -252,5 +274,24 @@ export class Config {
         } else {
             return fileSize >= this.minImageSize && fileSize <= this.maxImageSize;
         }
+    }
+
+    /**
+     * Get the blacklisted user IDs
+     * 
+     * @returns {string[]} Array of blacklisted user IDs
+     */
+    getBlacklistedUserIds(): string[] {
+        return this.blacklistedUserIds;
+    }
+
+    /**
+     * Check if a user ID is blacklisted
+     * 
+     * @param {string} userId - The user ID to check
+     * @returns {boolean} True if the user is blacklisted
+     */
+    isUserBlacklisted(userId: string): boolean {
+        return this.blacklistedUserIds.includes(userId);
     }
 }

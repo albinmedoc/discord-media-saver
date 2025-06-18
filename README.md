@@ -24,6 +24,11 @@ Automatically downloads media files (images and videos) from a specified Discord
 - `HEALTH_CHECK_PORT`: Port for health check HTTP server (default: `8080`)
 - `DATABASE_URL`: PostgreSQL connection string for duplicate detection (optional)
 - `DUPLICATE_CACHE_SIZE`: Maximum number of file hashes to keep in memory cache (default: `1000`)
+- `BLACKLISTED_USER_IDS`: Comma-separated list of Discord user IDs to ignore (optional)
+  - Example: `"123456789012345678,987654321098765432"`
+
+### File Size Limits
+
 - `MIN_IMAGE_SIZE`: Minimum image file size (default: `0`, supports: `100KB`, `1MB`, `500B`)
 - `MAX_IMAGE_SIZE`: Maximum image file size (default: `50MB`, supports: `100KB`, `1MB`, `1GB`)
 - `MIN_VIDEO_SIZE`: Minimum video file size (default: `0`, supports: `1MB`, `10MB`, `100MB`)
@@ -53,6 +58,9 @@ Automatically downloads media files (images and videos) from a specified Discord
    export MAX_IMAGE_SIZE="25MB"     # Skip images larger than 25MB
    export MIN_VIDEO_SIZE="1MB"      # Skip videos smaller than 1MB
    export MAX_VIDEO_SIZE="200MB"    # Skip videos larger than 200MB
+   
+   # Blacklist users (optional)
+   export BLACKLISTED_USER_IDS="123456789012345678,987654321098765432"  # Skip these users
    ```
 
 3. Build and run the application:

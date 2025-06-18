@@ -122,7 +122,7 @@ export class DiscordClient {
                 const messageData = data as GatewayMessageCreateDispatchData;
                 if (this.config.isMonitoredChannel(messageData.channel_id) && messageData.attachments.length > 0) {
                     Logger.info(`📨 New message with ${messageData.attachments.length} attachment(s) from ${messageData.author.username} in channel ${messageData.channel_id}`);
-                    this.mediaProcessor.processAttachments(messageData.attachments, messageData.author.username, messageData.timestamp);
+                    this.mediaProcessor.processAttachments(messageData);
                 }
                 break;
 
