@@ -32,7 +32,7 @@ export class DiscordMediaSaver {
     constructor() {
         this.config = new Config();
         this.duplicateDetection = new DuplicateDetectionService(this.config.getDuplicateCacheSize());
-        this.mediaProcessor = new MediaProcessor(this.config.getSaveDirectory(), this.duplicateDetection);
+        this.mediaProcessor = new MediaProcessor(this.config, this.duplicateDetection);
         this.healthCheckServer = new HealthCheckServer(this.config.getHealthCheckPort());
         this.healthCheckServer.setDuplicateDetectionService(this.duplicateDetection);
         this.discordClient = new DiscordClient(this.config, this.mediaProcessor, this.healthCheckServer);

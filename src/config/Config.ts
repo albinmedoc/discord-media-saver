@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import { FileUtils } from '../utils/FileUtils';
 
 /**
  * Configuration manager for Discord Media Saver
@@ -19,6 +20,10 @@ export class Config {
     private readonly healthCheckPort: number;
     private readonly databaseUrl: string | undefined;
     private readonly duplicateCacheSize: number;
+    private readonly minImageSize: number;
+    private readonly maxImageSize: number;
+    private readonly minVideoSize: number;
+    private readonly maxVideoSize: number;
 
     /**
      * Initialize configuration from environment variables
@@ -33,6 +38,12 @@ export class Config {
         this.databaseUrl = process.env.DATABASE_URL;
         this.duplicateCacheSize = parseInt(process.env.DUPLICATE_CACHE_SIZE || '1000', 10);
 
+        // File size limits (in bytes)
+        this.minImageSize = FileUtils.parseFileSize(process.env.MIN_IMAGE_SIZE, 0);
+        this.maxImageSize = FileUtils.parseFileSize(process.env.MAX_IMAGE_SIZE, 50 * 1024 * 1024); // 50MB default
+        this.minVideoSize = FileUtils.parseFileSize(process.env.MIN_VIDEO_SIZE, 0);
+        this.maxVideoSize = FileUtils.parseFileSize(process.env.MAX_VIDEO_SIZE, 500 * 1024 * 1024); // 500MB default
+        
         this.validateConfig();
         this.ensureDirectoryExists();
     }
@@ -190,5 +201,56 @@ export class Config {
      */
     getDuplicateCacheSize(): number {
         return this.duplicateCacheSize;
+    }
+
+    /**
+     * Get maximum image file size in bytes
+     * 
+     * @returns {number} Maximum image size in bytes
+     */
+    getMinImageSize(): number {
+        return this.minImageSize;
+    }
+
+    /**
+     * Get maximum image file size in bytes
+     * 
+     * @returns {number} Maximum image size in bytes
+     */
+    getMaxImageSize(): number {
+        return this.maxImageSize;
+    }
+
+    /**
+     * Get minimum video file size in bytes
+     * 
+     * @returns {number} Minimum video size in bytes
+     */
+    getMinVideoSize(): number {
+        return this.minVideoSize;
+    }
+
+    /**
+     * Get maximum video file size in bytes
+     * 
+     * @returns {number} Maximum video size in bytes
+     */
+    getMaxVideoSize(): number {
+        return this.maxVideoSize;
+    }
+
+    /**
+     * Check if a file size is within limits for the given media type
+     * 
+     * @param {number} fileSize - File size in bytes
+     * @param {boolean} isVideo - Whether the file is a video (false for images)
+     * @returns {boolean} True if file size is within limits
+     */
+    isFileSizeValid(fileSize: number, isVideo: boolean): boolean {
+        if (isVideo) {
+            return fileSize >= this.minVideoSize && fileSize <= this.maxVideoSize;
+        } else {
+            return fileSize >= this.minImageSize && fileSize <= this.maxImageSize;
+        }
     }
 }
