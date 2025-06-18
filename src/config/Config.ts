@@ -127,9 +127,9 @@ export class Config {
     }
 
     /**
-     * Get the Discord bot token
+     * Get the Discord token
      * 
-     * @returns {string} The Discord bot token
+     * @returns {string} The Discord token
      */
     getToken(): string {
         return this.token;

@@ -1,185 +1,134 @@
 # Discord Media Saver
 
-Automatically downloads media files (images and videos) from a specified Discord channel.
+Automatically downloads media files (images and videos) from Discord channels with advanced filtering and duplicate detection.
 
-## Features
+## ✨ Features
 
-- **TypeScript**: Fully typed with Discord API types for better reliability
-- **Modular Architecture**: Clean separation of concerns with dependency injection
-- **Multiple Channels**: Monitor multiple Discord channels simultaneously
-- **Automatic Reconnection**: Handles Discord WebSocket disconnections gracefully
-- **Media Filtering**: Only downloads image and video files
-- **Date-based Organization**: Files are automatically organized by date (YYYY/MM/DD)
-- **Safe Filenames**: Generates safe filenames with timestamps and usernames
-- **Docker Support**: Ready for containerized deployment
-- **Environment Configuration**: Configurable via environment variables
+- **🔄 Real-time Monitoring**: Automatically downloads media as it's posted
+- **📁 Smart Organization**: Files organized by date (YYYY/MM/DD structure)
+- **🚫 User Blacklisting**: Ignore specific users completely  
+- **📏 File Size Filtering**: Set min/max limits for images and videos
+- **🔍 Duplicate Detection**: Optional PostgreSQL-based duplicate prevention
+- **🏥 Health Monitoring**: Built-in HTTP health checks for monitoring
+- **🐳 Docker Ready**: Full Docker and Docker Compose support
+- **⚡ TypeScript**: Fully typed for reliability and maintainability
 
-## Environment Variables
+## 🚀 Quick Start
 
-- `DISCORD_TOKEN`: Your Discord bot token (required)
-- `CHANNEL_ID`: Discord channel ID(s) to monitor (required)
-  - Single channel: `"123456789012345678"`
-  - Multiple channels: `"123456789012345678,987654321098765432,555666777888999000"`
-- `SAVE_DIRECTORY`: Directory to save media files (default: `./media`)
-- `HEALTH_CHECK_PORT`: Port for health check HTTP server (default: `8080`)
-- `DATABASE_URL`: PostgreSQL connection string for duplicate detection (optional)
-- `DUPLICATE_CACHE_SIZE`: Maximum number of file hashes to keep in memory cache (default: `1000`)
-- `BLACKLISTED_USER_IDS`: Comma-separated list of Discord user IDs to ignore (optional)
-  - Example: `"123456789012345678,987654321098765432"`
+### Option 1: Docker (Recommended)
+```bash
+docker run -d \
+  --name discord-media-saver \
+  -e DISCORD_TOKEN="your_token_here" \
+  -e CHANNEL_ID="your_channel_id_here" \
+  -v /path/to/save/media:/media \
+  ghcr.io/albinmedoc/discord-media-saver:latest
+```
 
-### File Size Limits
+### Option 2: Local
+```bash
+git clone <repository-url>
+cd discord-media-saver
+pnpm install
+cp .env.example .env  # Edit with your values
+pnpm run build
+pnpmt run start
+```
 
-- `MIN_IMAGE_SIZE`: Minimum image file size (default: `0`, supports: `100KB`, `1MB`, `500B`)
-- `MAX_IMAGE_SIZE`: Maximum image file size (default: `50MB`, supports: `100KB`, `1MB`, `1GB`)
-- `MIN_VIDEO_SIZE`: Minimum video file size (default: `0`, supports: `1MB`, `10MB`, `100MB`)
-- `MAX_VIDEO_SIZE`: Maximum video file size (default: `500MB`, supports: `100MB`, `1GB`, `2GB`)
+## 📋 Prerequisites
 
-## Installation
+### Discord Setup
+1. **Create Discord Application**: Visit [Discord Developer Portal](https://discord.com/developers/applications)
+2. **Create Bot**: Go to "Bot" section and create a bot
+3. **Get Token**: Copy the bot token (keep it secure!)
+4. **Get Channel ID**: Right-click Discord channel → "Copy ID" (requires Developer Mode)
+5. **Invite Bot**: Generate invite URL with appropriate permissions
 
-1. Install dependencies:
-   ```bash
-   pnpm install
-   ```
+### Required Permissions
+Your Discord bot needs these permissions in the target channel:
+- ✅ View Channel
+- ✅ Read Message History
 
-2. Set environment variables:
-   ```bash
-   export DISCORD_TOKEN="your_token"
-   
-   # Single channel
-   export CHANNEL_ID="123456789012345678"
-   
-   # Or multiple channels (comma-separated)
-   export CHANNEL_ID="123456789012345678,987654321098765432,555666777888999000"
-   
-   export SAVE_DIRECTORY="./media"  # optional
-   
-   # File size limits (optional)
-   export MIN_IMAGE_SIZE="100KB"    # Skip images smaller than 100KB
-   export MAX_IMAGE_SIZE="25MB"     # Skip images larger than 25MB
-   export MIN_VIDEO_SIZE="1MB"      # Skip videos smaller than 1MB
-   export MAX_VIDEO_SIZE="200MB"    # Skip videos larger than 200MB
-   
-   # Blacklist users (optional)
-   export BLACKLISTED_USER_IDS="123456789012345678,987654321098765432"  # Skip these users
-   ```
+## ⚙️ Configuration
 
-3. Build and run the application:
-   ```bash
-   # Build TypeScript to JavaScript
-   pnpm run build
-   
-   # Run the compiled application
-   pnpm start
-   
-   # Or run directly with TypeScript (development)
-   pnpm run dev
-   ```
+### Essential Variables
+```bash
+DISCORD_TOKEN="your_token_here"     # Required
+CHANNEL_ID="123456789012345678"     # Required
+```
 
-## Docker Usage
+📖 **See [ENVIRONMENT.md](ENVIRONMENT.md) for complete configuration reference**
 
-Run the pre-built image:
+## 🎯 Supported Media Types
+
+| Type | Extensions |
+|------|------------|
+| **Images** | `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp` |
+| **Videos** | `.mp4`, `.mov`, `.avi`, `.mkv`, `.webm` |
+
+## 🔍 Duplicate Detection (Optional)
+
+Enable PostgreSQL-based duplicate detection to prevent downloading the same file multiple times:
+
+1. **Setup PostgreSQL database**
+2. **Set `DATABASE_URL` environment variable**  
+3. **Run schema migration**: `pnpm run db:push`
+
+Files are compared using MD5 hashes with fast in-memory caching.
+
+## 🐳 Docker Examples
+
+### Basic Usage
 ```bash
 docker run -d \
   --name discord-media-saver \
   -e DISCORD_TOKEN="your_token" \
   -e CHANNEL_ID="your_channel_id" \
-  -e SAVE_DIRECTORY="/media" \
-  -v /media:/media \
-  albinmedoc/discord-media-saver:latest
+  -v ./media:/media \
+  ghcr.io/albinmedoc/discord-media-saver:latest
 ```
 
-## Health Monitoring
+### With Docker Compose
+```yaml
+version: '3.8'
+services:
+  discord-media-saver:
+    image: ghcr.io/albinmedoc/discord-media-saver:latest
+    environment:
+      - DISCORD_TOKEN=your_token
+      - CHANNEL_ID=your_channel_id
+      - MAX_IMAGE_SIZE=25MB
+    volumes:
+      - ./media:/media
+    restart: unless-stopped
+```
 
-The application includes a comprehensive health monitoring system with HTTP endpoints for real-time status information about Discord connection, duplicate detection, and overall application health.
+📖 **See [DOCKER.md](DOCKER.md) for complete Docker deployment guide**
 
-### Health Check Endpoints
+## 🛠️ Development
 
-- **`GET /health`** - Comprehensive health status including:
-  - Discord WebSocket connection status
-  - Last heartbeat timestamp and reconnection count
-  - Duplicate detection statistics (cache size, database count)
-  - Application uptime and version
-  - Overall health status (healthy/unhealthy)
+For local development, testing, and contributing:
 
-### Health Status Criteria
-
-The application is considered **unhealthy** if:
-- Discord WebSocket is not connected
-- Last heartbeat was more than 2 minutes ago
-
-### Docker Health Monitoring
-
-The Docker image includes built-in health monitoring that directly uses the `/health` endpoint every 60 seconds. The health check provides detailed status information and proper exit codes for container orchestration.
-
-## Duplicate Detection
-
-The application includes optional duplicate detection using MD5 hashing with **Prisma ORM** to prevent downloading the same file multiple times.
-
-### Features
-- **Hash-based detection**: Uses MD5 hashes to identify duplicate files
-- **Prisma ORM**: Type-safe database operations with PostgreSQL
-- **In-memory cache**: Fast lookup for recently processed files (configurable size, default: 1000 files)
-- **Optional**: Gracefully disables if no database connection is available
-
-### Setup
-1. **Install PostgreSQL** (or use a hosted service)
-2. **Set DATABASE_URL** environment variable:
-   ```bash
-   export DATABASE_URL="postgresql://username:password@localhost:5432/discord_media_saver"
-   ```
-3. **Push database schema** (creates tables automatically):
-   ```bash
-   pnpm run db:push
-   ```
-4. **Run the application** - Prisma client will be generated automatically during build
-
-### Docker with PostgreSQL
 ```bash
-# Start PostgreSQL
-docker run -d \
-  --name postgres \
-  -e POSTGRES_DB=discord_media_saver \
-  -e POSTGRES_USER=discord \
-  -e POSTGRES_PASSWORD=password \
-  -v postgres_data:/var/lib/postgresql/data \
-  postgres:15
-
-# Start Discord Media Saver with duplicate detection
-docker run -d \
-  --name discord-media-saver \
-  --link postgres \
-  -e DISCORD_TOKEN="your_token" \
-  -e CHANNEL_ID="your_channel_id" \
-  -e DATABASE_URL="postgresql://discord:password@postgres:5432/discord_media_saver" \
-  -e DUPLICATE_CACHE_SIZE="2000" \
-  -e SAVE_DIRECTORY="/media" \
-  -v /media:/media \
-  albinmedoc/discord-media-saver:latest
+git clone https://github.com/albinmedoc/discord-media-saver.git
+cd discord-media-saver
+pnpm install
+cp .env.example .env  # Configure your environment
+pnpm run dev          # Start development server
 ```
 
-### How it works
-1. **File downloaded** → Calculate MD5 hash
-2. **Check cache** → Fast lookup in memory (last N files, configurable)
-3. **Check database** → Query PostgreSQL via Prisma for hash
-4. **If duplicate** → Delete downloaded file, log as duplicate
-5. **If unique** → Keep file, record hash in database and cache
+📖 **See [DEVELOPMENT.md](DEVELOPMENT.md) for detailed development guide**
 
-### Database Management
-```bash
-# Generate Prisma client (auto-runs during build)
-pnpm run db:generate
+## 🤝 Contributing
 
-# Push schema to database (create/update tables)
-pnpm run db:push
+Contributions are welcome! Please see [DEVELOPMENT.md](DEVELOPMENT.md) for guidelines.
 
-# Create and run migrations (for production)
-pnpm run db:migrate
+1. Fork the repository
+2. Create your feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
-# Open Prisma Studio (database GUI)
-pnpm run db:studio
-```
+---
 
-## Supported Media Types
-
-- **Images**: .jpg, .jpeg, .png, .gif, .webp
-- **Videos**: .mp4, .mov, .avi, .mkv, .webm
+**Need help?** Check the documentation files or open an issue with detailed information about your setup and the problem you're experiencing.
