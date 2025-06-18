@@ -5,10 +5,15 @@ This document lists all available environment variables for Discord Media Saver.
 ## Required Variables
 
 ### `DISCORD_TOKEN`
-- **Description**: Your Discord token
+- **Description**: Your personal Discord user token (not a bot token)
 - **Required**: Yes
 - **Example**: `"your_token_here"`
-- **How to get**: [Discord Developer Portal](https://discord.com/developers/applications) → Your Application → Bot → Token
+- **How to get**: 
+  1. Open Discord in your web browser
+  2. Press F12 → Go to Network tab
+  3. Send a message in any channel
+  4. Look for "Authorization: Bearer XXXXXXXXXX" in the headers
+  5. Copy the token after "Bearer "
 
 ### `CHANNEL_ID`
 - **Description**: Discord channel ID(s) to monitor

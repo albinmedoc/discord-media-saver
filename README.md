@@ -38,16 +38,19 @@ pnpmt run start
 ## 📋 Prerequisites
 
 ### Discord Setup
-1. **Create Discord Application**: Visit [Discord Developer Portal](https://discord.com/developers/applications)
-2. **Create Bot**: Go to "Bot" section and create a bot
-3. **Get Token**: Copy the bot token (keep it secure!)
-4. **Get Channel ID**: Right-click Discord channel → "Copy ID" (requires Developer Mode)
-5. **Invite Bot**: Generate invite URL with appropriate permissions
+1. **Get Your Personal Token**: 
+   - Open Discord in your web browser
+   - Press F12 → Go to Network tab
+   - Send a message in any channel
+   - Look for "Authorization: Bearer XXXXXXXXXX" in the headers
+   - Copy the token after "Bearer " (keep it secure!)
+2. **Get Channel ID**: Right-click Discord channel → "Copy ID"
 
 ### Required Permissions
-Your Discord bot needs these permissions in the target channel:
+Your Discord account needs access to the target channel:
 - ✅ View Channel
-- ✅ Read Message History
+
+**Note**: This uses your personal Discord token, not a bot token. Make sure you have permission to access the channels you want to monitor.
 
 ## ⚙️ Configuration
 

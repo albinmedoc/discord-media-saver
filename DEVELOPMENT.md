@@ -6,7 +6,7 @@ This guide will help you set up and develop the Discord Media Saver application 
 
 - **Node.js 18 or higher**
 - **pnpm** (Package manager)
-- **Discord Token** ([Get one here](https://discord.com/developers/applications))
+- **Personal Discord User Token** (Get from Discord web browser: F12 → Network → Send message → Look for "Authorization: Bearer ...")
 - **Discord Channel ID** (Right-click channel → Copy ID with Developer Mode enabled)
 - **PostgreSQL** (Optional, for duplicate detection)
 

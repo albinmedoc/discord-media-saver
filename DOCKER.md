@@ -3,6 +3,14 @@
 This guide covers running Discord Media Saver using Docker.
 
 ## Quick Start
+
+**Note**: This uses your personal Discord user token, not a bot token. To get your token:
+1. Open Discord in web browser
+2. Press F12 → Network tab  
+3. Send a message in any channel
+4. Look for "Authorization: Bearer XXXXXXXXXX" in headers
+5. Copy the token after "Bearer "
+
 ```bash
 docker run -d \
   --name discord-media-saver \
