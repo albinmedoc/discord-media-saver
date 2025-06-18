@@ -20,8 +20,8 @@ COPY docker-entrypoint.sh ./
 # Make entrypoint script executable
 RUN chmod +x docker-entrypoint.sh
 
-# Build TypeScript and copy generated files
-RUN pnpm run build && cp -r src/generated dist/
+# Build TypeScript (includes Prisma generation and file copying)
+RUN pnpm run build
 
 
 # Set default environment variables
