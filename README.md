@@ -6,8 +6,10 @@ Automatically downloads media files (images and videos) from a specified Discord
 
 - **TypeScript**: Fully typed with Discord API types for better reliability
 - **Modular Architecture**: Clean separation of concerns with dependency injection
+- **Multiple Channels**: Monitor multiple Discord channels simultaneously
 - **Automatic Reconnection**: Handles Discord WebSocket disconnections gracefully
 - **Media Filtering**: Only downloads image and video files
+- **Date-based Organization**: Files are automatically organized by date (YYYY/MM/DD)
 - **Safe Filenames**: Generates safe filenames with timestamps and usernames
 - **Docker Support**: Ready for containerized deployment
 - **Environment Configuration**: Configurable via environment variables

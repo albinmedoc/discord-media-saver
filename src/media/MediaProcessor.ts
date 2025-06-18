@@ -35,18 +35,43 @@ export class MediaProcessor {
      */
     private async downloadAttachment(attachment: APIAttachment, username: string, timestamp: string): Promise<void> {
         try {
+            const date = new Date(timestamp);
+            const dateFolder = this.createDateFolder(date);
             const filename = FileUtils.generateSafeFilename(attachment, username, timestamp);
-            const filepath = path.join(this.saveDirectory, filename);
+            const filepath = path.join(this.saveDirectory, dateFolder, filename);
 
-            Logger.info(`📥 Downloading: ${filename} (${FileUtils.formatFileSize(attachment.size)})`);
+            Logger.info(`📥 Downloading: ${dateFolder}/${filename} (${FileUtils.formatFileSize(attachment.size)})`);
 
             await this.downloadFile(attachment.url, filepath);
             
-            Logger.success(`✓ Saved: ${filename}`);
+            Logger.success(`✓ Saved: ${dateFolder}/${filename}`);
             
         } catch (error) {
             Logger.error(`❌ Could not download ${attachment.filename}:`, error as Error);
         }
+    }
+
+    /**
+     * Create date-based folder structure (YYYY/MM/DD)
+     * 
+     * @private
+     * @param {Date} date - The date to create folder for
+     * @returns {string} The relative path for the date folder
+     */
+    private createDateFolder(date: Date): string {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        
+        const dateFolder = path.join(year.toString(), month, day);
+        const fullPath = path.join(this.saveDirectory, dateFolder);
+        
+        // Ensure the directory exists
+        if (!fs.existsSync(fullPath)) {
+            fs.mkdirSync(fullPath, { recursive: true });
+        }
+        
+        return dateFolder;
     }
 
     /**
