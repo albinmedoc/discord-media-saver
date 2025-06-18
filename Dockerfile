@@ -1,7 +1,7 @@
 FROM node:18-alpine
 
-# Install pnpm globally
-RUN npm install -g pnpm
+# Install pnpm globally and wget for health checks
+RUN npm install -g pnpm && apk add --no-cache wget
 
 WORKDIR /usr/src/app
 

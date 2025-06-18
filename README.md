@@ -95,11 +95,11 @@ The Docker image includes built-in health monitoring that directly uses the `/he
 
 ## Duplicate Detection
 
-The application includes optional duplicate detection using MD5 hashing to prevent downloading the same file multiple times.
+The application includes optional duplicate detection using MD5 hashing with **Prisma ORM** to prevent downloading the same file multiple times.
 
 ### Features
 - **Hash-based detection**: Uses MD5 hashes to identify duplicate files
-- **PostgreSQL storage**: Persistent storage of file hashes across restarts
+- **Prisma ORM**: Type-safe database operations with PostgreSQL
 - **In-memory cache**: Fast lookup for recently processed files (configurable size, default: 1000 files)
 - **Optional**: Gracefully disables if no database connection is available
 
@@ -109,7 +109,11 @@ The application includes optional duplicate detection using MD5 hashing to preve
    ```bash
    export DATABASE_URL="postgresql://username:password@localhost:5432/discord_media_saver"
    ```
-3. **Run the application** - tables will be created automatically
+3. **Push database schema** (creates tables automatically):
+   ```bash
+   pnpm run db:push
+   ```
+4. **Run the application** - Prisma client will be generated automatically during build
 
 ### Docker with PostgreSQL
 ```bash
@@ -137,10 +141,25 @@ docker run -d \
 
 ### How it works
 1. **File downloaded** → Calculate MD5 hash
-2. **Check cache** → Fast lookup in memory (last 1000 files)
-3. **Check database** → Query PostgreSQL for hash
+2. **Check cache** → Fast lookup in memory (last N files, configurable)
+3. **Check database** → Query PostgreSQL via Prisma for hash
 4. **If duplicate** → Delete downloaded file, log as duplicate
 5. **If unique** → Keep file, record hash in database and cache
+
+### Database Management
+```bash
+# Generate Prisma client (auto-runs during build)
+pnpm run db:generate
+
+# Push schema to database (create/update tables)
+pnpm run db:push
+
+# Create and run migrations (for production)
+pnpm run db:migrate
+
+# Open Prisma Studio (database GUI)
+pnpm run db:studio
+```
 
 ## Supported Media Types
 

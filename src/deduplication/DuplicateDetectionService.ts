@@ -1,19 +1,19 @@
-import { Pool, PoolConfig } from 'pg';
+import { PrismaClient } from '../generated/prisma';
 import { createHash } from 'crypto';
 import * as fs from 'fs';
 import { Logger } from '../utils/Logger';
 
 /**
- * Duplicate detection service using PostgreSQL and in-memory cache
+ * Duplicate detection service using Prisma ORM and in-memory cache
  * 
  * Features:
  * - MD5 hash-based duplicate detection
- * - PostgreSQL storage for persistence
+ * - PostgreSQL storage with Prisma ORM for persistence
  * - In-memory LRU cache for recent files
  * - Optional - gracefully disables if no database connection
  */
 export class DuplicateDetectionService {
-    private pool: Pool | null = null;
+    private prisma: PrismaClient | null = null;
     private recentHashes: Map<string, boolean> = new Map();
     private readonly maxCacheSize: number;
     private isEnabled: boolean = false;
@@ -24,7 +24,7 @@ export class DuplicateDetectionService {
 
     /**
      * Initialize the duplicate detection service
-     * Attempts to connect to PostgreSQL, disables service if connection fails
+     * Attempts to connect to PostgreSQL via Prisma, disables service if connection fails
      */
     async init(databaseUrl?: string): Promise<void> {
         if (!databaseUrl) {
@@ -33,48 +33,26 @@ export class DuplicateDetectionService {
         }
 
         try {
-            const poolConfig: PoolConfig = {
-                connectionString: databaseUrl,
-                max: 5,
-                idleTimeoutMillis: 30000,
-                connectionTimeoutMillis: 5000,
-            };
-
-            this.pool = new Pool(poolConfig);
+            this.prisma = new PrismaClient({
+                datasources: {
+                    db: {
+                        url: databaseUrl
+                    }
+                }
+            });
             
-            // Test connection
-            const client = await this.pool.connect();
-            await this.createTables();
-            client.release();
+            // Test connection by checking if we can query the database
+            await this.prisma.$connect();
             
             this.isEnabled = true;
-            Logger.success('✓ Duplicate detection enabled with PostgreSQL');
+            Logger.success('✓ Duplicate detection enabled with Prisma + PostgreSQL');
             
         } catch (error) {
-            Logger.warn('⚠️ Failed to connect to PostgreSQL - duplicate detection disabled');
+            Logger.warn('⚠️ Failed to connect to PostgreSQL via Prisma - duplicate detection disabled');
             Logger.warn(`Database error: ${(error as Error).message}`);
-            this.pool = null;
+            this.prisma = null;
             this.isEnabled = false;
         }
-    }
-
-    /**
-     * Create necessary database tables
-     */
-    private async createTables(): Promise<void> {
-        if (!this.pool) return;
-
-        const createTableQuery = `
-            CREATE TABLE IF NOT EXISTS file_hashes (
-                id SERIAL PRIMARY KEY,
-                filename VARCHAR(255) UNIQUE NOT NULL,
-                hash CHAR(32) NOT NULL,
-                file_size BIGINT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        `;
-
-        await this.pool.query(createTableQuery);
     }
 
     /**
@@ -117,14 +95,13 @@ export class DuplicateDetectionService {
                 return true;
             }
 
-            // Check database
-            if (this.pool) {
-                const result = await this.pool.query(
-                    'SELECT id FROM file_hashes WHERE hash = $1',
-                    [fileHash]
-                );
+            // Check database with Prisma
+            if (this.prisma) {
+                const existingFile = await this.prisma.fileHash.findFirst({
+                    where: { hash: fileHash }
+                });
 
-                if (result.rows.length > 0) {
+                if (existingFile) {
                     Logger.info(`🔄 Duplicate detected (database): ${filename} (hash: ${fileHash})`);
                     this.addToCache(fileHash);
                     return true;
@@ -154,16 +131,21 @@ export class DuplicateDetectionService {
             // Add to cache
             this.addToCache(hash);
 
-            // Add to database
-            if (this.pool) {
-                await this.pool.query(`
-                    INSERT INTO file_hashes (filename, hash, file_size) 
-                    VALUES ($1, $2, $3) 
-                    ON CONFLICT (filename) DO UPDATE SET 
-                        hash = EXCLUDED.hash,
-                        file_size = EXCLUDED.file_size,
-                        created_at = CURRENT_TIMESTAMP
-                `, [filename, hash, fileSize]);
+            // Add to database with Prisma
+            if (this.prisma) {
+                await this.prisma.fileHash.upsert({
+                    where: { filename },
+                    update: {
+                        hash,
+                        fileSize: BigInt(fileSize),
+                        createdAt: new Date()
+                    },
+                    create: {
+                        filename,
+                        hash,
+                        fileSize: BigInt(fileSize)
+                    }
+                });
             }
 
         } catch (error) {
@@ -203,10 +185,10 @@ export class DuplicateDetectionService {
     }> {
         let totalFilesInDatabase = 0;
 
-        if (this.pool) {
+        if (this.prisma) {
             try {
-                const result = await this.pool.query('SELECT COUNT(*) as count FROM file_hashes');
-                totalFilesInDatabase = parseInt(result.rows[0].count, 10);
+                const count = await this.prisma.fileHash.count();
+                totalFilesInDatabase = count;
             } catch (error) {
                 Logger.error('Error getting database stats:', error as Error);
             }
@@ -224,8 +206,8 @@ export class DuplicateDetectionService {
      * Cleanup database connections
      */
     async cleanup(): Promise<void> {
-        if (this.pool) {
-            await this.pool.end();
+        if (this.prisma) {
+            await this.prisma.$disconnect();
             Logger.info('🔍 Duplicate detection service stopped');
         }
     }
