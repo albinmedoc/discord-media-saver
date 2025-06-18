@@ -12,12 +12,13 @@ COPY pnpm-lock.yaml* ./
 # Install dependencies with pnpm
 RUN pnpm install --frozen-lockfile
 
-# Copy source code
+# Copy source code and Prisma schema
 COPY src/ ./src/
 COPY tsconfig.json ./
 
-# Build TypeScript
-RUN pnpm run build
+# Build TypeScript and copy generated files
+RUN pnpm run build && cp -r src/generated dist/
+
 
 # Set default environment variables
 ENV SAVE_DIRECTORY=/media
