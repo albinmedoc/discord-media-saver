@@ -4,15 +4,18 @@ import * as https from 'https';
 import type { APIAttachment } from 'discord-api-types/v9';
 import { FileUtils } from '../utils/FileUtils';
 import { Logger } from '../utils/Logger';
+import { DuplicateDetectionService } from '../deduplication/DuplicateDetectionService';
 
 /**
  * Handles media processing and downloading
  */
 export class MediaProcessor {
     private readonly saveDirectory: string;
+    private readonly duplicateDetection: DuplicateDetectionService;
 
-    constructor(saveDirectory: string) {
+    constructor(saveDirectory: string, duplicateDetection: DuplicateDetectionService) {
         this.saveDirectory = saveDirectory;
+        this.duplicateDetection = duplicateDetection;
     }
 
     /**
@@ -40,9 +43,26 @@ export class MediaProcessor {
             const filename = FileUtils.generateSafeFilename(attachment, username, timestamp);
             const filepath = path.join(this.saveDirectory, dateFolder, filename);
 
+            // Check if file already exists locally
+            if (fs.existsSync(filepath)) {
+                Logger.info(`⏭️ File already exists: ${dateFolder}/${filename}`);
+                return;
+            }
+
             Logger.info(`📥 Downloading: ${dateFolder}/${filename} (${FileUtils.formatFileSize(attachment.size)})`);
 
             await this.downloadFile(attachment.url, filepath);
+            
+            // Check for duplicates after download
+            if (this.duplicateDetection.isActive()) {
+                const isDuplicate = await this.duplicateDetection.isDuplicate(filepath, filename);
+                if (isDuplicate) {
+                    // Remove the duplicate file
+                    FileUtils.removeFileSafely(filepath);
+                    Logger.info(`🗑️ Removed duplicate: ${dateFolder}/${filename}`);
+                    return;
+                }
+            }
             
             Logger.success(`✓ Saved: ${dateFolder}/${filename}`);
             
@@ -104,5 +124,12 @@ export class MediaProcessor {
                 reject(error);
             });
         });
+    }
+
+    /**
+     * Get duplicate detection service for statistics
+     */
+    getDuplicateDetectionService(): DuplicateDetectionService {
+        return this.duplicateDetection;
     }
 }

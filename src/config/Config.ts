@@ -17,6 +17,8 @@ export class Config {
     private readonly channelIds: string[];
     private readonly saveDirectory: string;
     private readonly healthCheckPort: number;
+    private readonly databaseUrl: string | undefined;
+    private readonly duplicateCacheSize: number;
 
     /**
      * Initialize configuration from environment variables
@@ -28,7 +30,9 @@ export class Config {
         this.channelIds = this.parseChannelIds(process.env.CHANNEL_ID || '');
         this.saveDirectory = process.env.SAVE_DIRECTORY || './media';
         this.healthCheckPort = parseInt(process.env.HEALTH_CHECK_PORT || '8080', 10);
-        
+        this.databaseUrl = process.env.DATABASE_URL;
+        this.duplicateCacheSize = parseInt(process.env.DUPLICATE_CACHE_SIZE || '1000', 10);
+
         this.validateConfig();
         this.ensureDirectoryExists();
     }
@@ -44,7 +48,7 @@ export class Config {
         if (!channelIdString.trim()) {
             return [];
         }
-        
+
         return channelIdString
             .split(',')
             .map(id => id.trim())
@@ -169,5 +173,22 @@ export class Config {
      */
     getHealthCheckPort(): number {
         return this.healthCheckPort;
+    }
+    /**
+     * Get the database URL for duplicate detection
+     * 
+     * @returns {string | undefined} Database URL or undefined if not set
+     */
+    getDatabaseUrl(): string | undefined {
+        return this.databaseUrl;
+    }
+
+    /**
+     * Get the duplicate detection cache size
+     * 
+     * @returns {number} Maximum number of file hashes to keep in memory cache
+     */
+    getDuplicateCacheSize(): number {
+        return this.duplicateCacheSize;
     }
 }

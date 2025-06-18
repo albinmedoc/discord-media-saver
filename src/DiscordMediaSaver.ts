@@ -3,6 +3,7 @@ import { DiscordClient } from './discord/DiscordClient';
 import { MediaProcessor } from './media/MediaProcessor';
 import { Logger } from './utils/Logger';
 import { HealthCheckServer } from './health/HealthCheckServer';
+import { DuplicateDetectionService } from './deduplication/DuplicateDetectionService';
 
 /**
  * Main orchestrator class for Discord Media Saver
@@ -20,6 +21,7 @@ import { HealthCheckServer } from './health/HealthCheckServer';
  */
 export class DiscordMediaSaver {
     private readonly config: Config;
+    private readonly duplicateDetection: DuplicateDetectionService;
     private readonly mediaProcessor: MediaProcessor;
     private readonly discordClient: DiscordClient;
     private readonly healthCheckServer: HealthCheckServer;
@@ -29,8 +31,10 @@ export class DiscordMediaSaver {
      */
     constructor() {
         this.config = new Config();
-        this.mediaProcessor = new MediaProcessor(this.config.getSaveDirectory());
+        this.duplicateDetection = new DuplicateDetectionService(this.config.getDuplicateCacheSize());
+        this.mediaProcessor = new MediaProcessor(this.config.getSaveDirectory(), this.duplicateDetection);
         this.healthCheckServer = new HealthCheckServer(this.config.getHealthCheckPort());
+        this.healthCheckServer.setDuplicateDetectionService(this.duplicateDetection);
         this.discordClient = new DiscordClient(this.config, this.mediaProcessor, this.healthCheckServer);
     }
 
@@ -38,17 +42,26 @@ export class DiscordMediaSaver {
      * Initialize and start the application
      * 
      * This will:
-     * 1. Start the health check server
-     * 2. Log startup information
-     * 3. Connect to Discord Gateway
-     * 4. Begin monitoring the specified channel
+     * 1. Initialize duplicate detection service
+     * 2. Start the health check server
+     * 3. Log startup information
+     * 4. Connect to Discord Gateway
+     * 5. Begin monitoring the specified channel
      * 
      * @throws {Error} If connection to Discord fails or health server cannot start
      */
     async init(): Promise<void> {
         Logger.info('🚀 Starting Discord Media Saver...');
         
-        // Start health check server first
+        // Initialize duplicate detection service
+        try {
+            await this.duplicateDetection.init(this.config.getDatabaseUrl());
+        } catch (error) {
+            Logger.error('❌ Failed to initialize duplicate detection:', error as Error);
+            // Continue without duplicate detection - it will be disabled
+        }
+        
+        // Start health check server
         try {
             await this.healthCheckServer.start();
         } catch (error) {
@@ -82,6 +95,12 @@ export class DiscordMediaSaver {
             await this.healthCheckServer.stop();
         } catch (error) {
             Logger.error('❌ Error stopping health check server:', error as Error);
+        }
+        
+        try {
+            await this.duplicateDetection.cleanup();
+        } catch (error) {
+            Logger.error('❌ Error cleaning up duplicate detection:', error as Error);
         }
         
         Logger.info('✓ Cleanup completed');
