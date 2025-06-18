@@ -13,6 +13,7 @@ import type {
 import { Logger } from '../utils/Logger';
 import { Config } from '../config/Config';
 import { MediaProcessor } from '../media/MediaProcessor';
+import { HealthCheckServer } from '../health/HealthCheckServer';
 
 /**
  * Discord WebSocket client for handling gateway connection
@@ -20,14 +21,16 @@ import { MediaProcessor } from '../media/MediaProcessor';
 export class DiscordClient {
     private readonly config: Config;
     private readonly mediaProcessor: MediaProcessor;
+    private readonly healthCheck: HealthCheckServer | null;
     private ws: WebSocket | null = null;
     private heartbeatInterval: NodeJS.Timeout | null = null;
     private sessionId: string | null = null;
     private sequenceNumber: number | null = null;
 
-    constructor(config: Config, mediaProcessor: MediaProcessor) {
+    constructor(config: Config, mediaProcessor: MediaProcessor, healthCheck?: HealthCheckServer) {
         this.config = config;
         this.mediaProcessor = mediaProcessor;
+        this.healthCheck = healthCheck || null;
     }
 
     /**
@@ -40,6 +43,7 @@ export class DiscordClient {
         
         this.ws.on('open', () => {
             Logger.success('✓ Connected to Discord Gateway');
+            this.healthCheck?.updateDiscordStatus(true);
         });
 
         this.ws.on('message', (data: WebSocket.RawData) => {
@@ -48,6 +52,7 @@ export class DiscordClient {
 
         this.ws.on('close', (code: number, reason: Buffer) => {
             Logger.error(`❌ Connection closed: ${code} ${reason.toString()}`);
+            this.healthCheck?.updateDiscordStatus(false);
             Logger.info('🔄 Reconnecting in 5 seconds...');
             setTimeout(() => this.connect(), this.config.getReconnectDelay());
         });
@@ -151,6 +156,9 @@ export class DiscordClient {
                 op: GatewayOpcodes.Heartbeat,
                 d: this.sequenceNumber
             }));
+            
+            // Update health check with latest heartbeat time
+            this.healthCheck?.updateDiscordStatus(true, Date.now());
         }
     }
 

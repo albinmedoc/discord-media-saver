@@ -8,15 +8,15 @@ async function main(): Promise<void> {
     const saver = new DiscordMediaSaver();
     
     // Handle graceful shutdown
-    process.on('SIGINT', () => {
+    process.on('SIGINT', async () => {
         Logger.info('\n🛑 Shutting down...');
-        saver.cleanup();
+        await saver.cleanup();
         process.exit(0);
     });
 
-    process.on('SIGTERM', () => {
+    process.on('SIGTERM', async () => {
         Logger.info('\n🛑 Shutting down (SIGTERM)...');
-        saver.cleanup();
+        await saver.cleanup();
         process.exit(0);
     });
 
@@ -28,7 +28,7 @@ async function main(): Promise<void> {
         
     } catch (error) {
         Logger.error('❌ Error:', error as Error);
-        saver.cleanup();
+        await saver.cleanup();
         process.exit(1);
     }
 }

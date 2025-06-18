@@ -16,6 +16,7 @@ export class Config {
     private readonly token: string;
     private readonly channelIds: string[];
     private readonly saveDirectory: string;
+    private readonly healthCheckPort: number;
 
     /**
      * Initialize configuration from environment variables
@@ -26,6 +27,7 @@ export class Config {
         this.token = process.env.DISCORD_TOKEN || '';
         this.channelIds = this.parseChannelIds(process.env.CHANNEL_ID || '');
         this.saveDirectory = process.env.SAVE_DIRECTORY || './media';
+        this.healthCheckPort = parseInt(process.env.HEALTH_CHECK_PORT || '8080', 10);
         
         this.validateConfig();
         this.ensureDirectoryExists();
@@ -158,5 +160,14 @@ export class Config {
      */
     getIdentifyDelay(): number {
         return 2000; // 2 seconds
+    }
+
+    /**
+     * Get the health check server port
+     * 
+     * @returns {number} Port for the health check HTTP server
+     */
+    getHealthCheckPort(): number {
+        return this.healthCheckPort;
     }
 }

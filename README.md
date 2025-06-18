@@ -21,6 +21,7 @@ Automatically downloads media files (images and videos) from a specified Discord
   - Single channel: `"123456789012345678"`
   - Multiple channels: `"123456789012345678,987654321098765432,555666777888999000"`
 - `SAVE_DIRECTORY`: Directory to save media files (default: `./media`)
+- `HEALTH_CHECK_PORT`: Port for health check HTTP server (default: `8080`)
 
 ## Installation
 
@@ -66,6 +67,43 @@ docker run -d \
   -v /media:/media \
   albinmedoc/discord-media-saver:latest
 ```
+
+## Health Monitoring
+
+The application includes a built-in HTTP health check server that provides real-time status information about the Discord connection and application health.
+
+### Health Check Endpoint
+
+- **`GET /health`** - Basic health status (200 = healthy, 503 = unhealthy) - Used by Docker HEALTHCHECK
+
+### Docker Health Checks
+
+The Docker image includes built-in health monitoring using the `/health` endpoint:
+
+```bash
+# Check container health status
+docker ps --format "table {{.Names}}\t{{.Status}}"
+
+# View detailed health check logs
+docker inspect discord-media-saver --format='{{json .State.Health}}' | jq
+
+# Monitor health events in real-time
+docker events --filter container=discord-media-saver --filter event=health_status
+```
+
+**Health Check Configuration:**
+- **Interval**: Every 60 seconds
+- **Timeout**: 10 seconds per check
+- **Start Period**: 30 seconds (grace period after container start)
+- **Retries**: 3 failed checks before marking unhealthy
+
+### Health Check Configuration
+
+The health check server runs on port 8080 by default, configurable via the `HEALTH_CHECK_PORT` environment variable.
+
+The application is considered **unhealthy** if:
+- Discord WebSocket is not connected
+- Last heartbeat was more than 2 minutes ago
 
 ## Supported Media Types
 
