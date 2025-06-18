@@ -24,6 +24,10 @@ Automatically downloads media files (images and videos) from a specified Discord
 - `HEALTH_CHECK_PORT`: Port for health check HTTP server (default: `8080`)
 - `DATABASE_URL`: PostgreSQL connection string for duplicate detection (optional)
 - `DUPLICATE_CACHE_SIZE`: Maximum number of file hashes to keep in memory cache (default: `1000`)
+- `MIN_IMAGE_SIZE`: Minimum image file size (default: `0`, supports: `100KB`, `1MB`, `500B`)
+- `MAX_IMAGE_SIZE`: Maximum image file size (default: `50MB`, supports: `100KB`, `1MB`, `1GB`)
+- `MIN_VIDEO_SIZE`: Minimum video file size (default: `0`, supports: `1MB`, `10MB`, `100MB`)
+- `MAX_VIDEO_SIZE`: Maximum video file size (default: `500MB`, supports: `100MB`, `1GB`, `2GB`)
 
 ## Installation
 
@@ -43,6 +47,12 @@ Automatically downloads media files (images and videos) from a specified Discord
    export CHANNEL_ID="123456789012345678,987654321098765432,555666777888999000"
    
    export SAVE_DIRECTORY="./media"  # optional
+   
+   # File size limits (optional)
+   export MIN_IMAGE_SIZE="100KB"    # Skip images smaller than 100KB
+   export MAX_IMAGE_SIZE="25MB"     # Skip images larger than 25MB
+   export MIN_VIDEO_SIZE="1MB"      # Skip videos smaller than 1MB
+   export MAX_VIDEO_SIZE="200MB"    # Skip videos larger than 200MB
    ```
 
 3. Build and run the application:

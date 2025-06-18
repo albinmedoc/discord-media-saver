@@ -5,16 +5,17 @@ import type { APIAttachment } from 'discord-api-types/v9';
 import { FileUtils } from '../utils/FileUtils';
 import { Logger } from '../utils/Logger';
 import { DuplicateDetectionService } from '../deduplication/DuplicateDetectionService';
+import { Config } from '../config/Config';
 
 /**
  * Handles media processing and downloading
  */
 export class MediaProcessor {
-    private readonly saveDirectory: string;
+    private readonly config: Config;
     private readonly duplicateDetection: DuplicateDetectionService;
 
-    constructor(saveDirectory: string, duplicateDetection: DuplicateDetectionService) {
-        this.saveDirectory = saveDirectory;
+    constructor(config: Config, duplicateDetection: DuplicateDetectionService) { ;
+        this.config = config;
         this.duplicateDetection = duplicateDetection;
     }
 
@@ -25,11 +26,25 @@ export class MediaProcessor {
         for (const attachment of attachments) {
             const isMedia = FileUtils.isMediaFile(attachment.filename, attachment.content_type);
             
-            if (isMedia) {
-                await this.downloadAttachment(attachment, username, timestamp);
-            } else {
+            if (!isMedia) {
                 Logger.info(`⏭️ Skipping ${attachment.filename} (not media)`);
+                continue;
             }
+
+            // Check file size limits
+            const isVideo = FileUtils.isVideoFile(attachment.filename, attachment.content_type);
+            const fileSizeValid = this.config.isFileSizeValid(attachment.size, isVideo);
+            
+            if (!fileSizeValid) {
+                const fileType = isVideo ? 'video' : 'image';
+                const minSize = isVideo ? this.config.getMinVideoSize() : this.config.getMinImageSize();
+                const maxSize = isVideo ? this.config.getMaxVideoSize() : this.config.getMaxImageSize();
+                
+                Logger.warn(`⚠️ Skipping ${attachment.filename} (${FileUtils.formatFileSize(attachment.size)} ${fileType} - limits: ${FileUtils.formatFileSize(minSize)} - ${FileUtils.formatFileSize(maxSize)})`);
+                continue;
+            }
+
+            await this.downloadAttachment(attachment, username, timestamp);
         }
     }
 
@@ -41,7 +56,7 @@ export class MediaProcessor {
             const date = new Date(timestamp);
             const dateFolder = this.createDateFolder(date);
             const filename = FileUtils.generateSafeFilename(attachment, username, timestamp);
-            const filepath = path.join(this.saveDirectory, dateFolder, filename);
+            const filepath = path.join(this.config.getSaveDirectory(), dateFolder, filename);
 
             // Check if file already exists locally
             if (fs.existsSync(filepath)) {
@@ -84,7 +99,7 @@ export class MediaProcessor {
         const day = String(date.getDate()).padStart(2, '0');
         
         const dateFolder = path.join(year.toString(), month, day);
-        const fullPath = path.join(this.saveDirectory, dateFolder);
+        const fullPath = path.join(this.config.getSaveDirectory(), dateFolder);
         
         // Ensure the directory exists
         if (!fs.existsSync(fullPath)) {

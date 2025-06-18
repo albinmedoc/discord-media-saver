@@ -25,6 +25,24 @@ export class FileUtils {
     }
 
     /**
+     * Check if a file is a video based on filename and content type
+     */
+    static isVideoFile(filename: string, contentType?: string): boolean {
+        const videoExtensions = ['.mp4', '.mov', '.avi', '.mkv', '.webm'];
+        const videoContentTypes = ['video/'];
+        
+        const hasVideoExtension = videoExtensions.some(ext => 
+            filename.toLowerCase().endsWith(ext)
+        );
+        
+        const hasVideoContentType = contentType ? videoContentTypes.some(type => 
+            contentType.startsWith(type)
+        ) : false;
+
+        return hasVideoExtension || hasVideoContentType;
+    }
+
+    /**
      * Generate a safe filename for downloaded media
      */
     static generateSafeFilename(attachment: APIAttachment, username: string, timestamp: string): string {
@@ -48,6 +66,46 @@ export class FileUtils {
         const sizes = ['B', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    /**
+     * Parse file size from environment variable
+     * Supports formats like: "10MB", "500KB", "1GB", or plain bytes
+     * 
+     * @param {string | undefined} sizeString - Size string from env var
+     * @param {number} defaultValue - Default value if parsing fails
+     * @returns {number} Size in bytes
+     */
+    static parseFileSize(sizeString: string | undefined, defaultValue: number): number {
+        if (!sizeString) {
+            return defaultValue;
+        }
+
+        const sizeStr = sizeString.trim().toUpperCase();
+        const numericPart = parseFloat(sizeStr);
+
+        if (isNaN(numericPart)) {
+            return defaultValue;
+        }
+
+        // If it's just a number, treat as bytes
+        if (/^\d+(\.\d+)?$/.test(sizeStr)) {
+            return Math.floor(numericPart);
+        }
+
+        // Parse size units
+        if (sizeStr.endsWith('KB')) {
+            return Math.floor(numericPart * 1024);
+        } else if (sizeStr.endsWith('MB')) {
+            return Math.floor(numericPart * 1024 * 1024);
+        } else if (sizeStr.endsWith('GB')) {
+            return Math.floor(numericPart * 1024 * 1024 * 1024);
+        } else if (sizeStr.endsWith('B')) {
+            return Math.floor(numericPart);
+        }
+
+        // Default: treat as bytes
+        return Math.floor(numericPart);
     }
 
     /**
