@@ -190,7 +190,10 @@ export class HealthCheckServer {
             this.discordStatus.reconnectCount++;
         }
 
-        Logger.info(`🏥 Health status updated: Discord ${connected ? 'connected' : 'disconnected'}`);
+        // Only log when the connection status actually changes
+        if (wasConnected !== connected) {
+            Logger.info(`🏥 Health status updated: Discord ${connected ? 'connected' : 'disconnected'}`);
+        }
     }
 
     /**
