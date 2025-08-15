@@ -13,10 +13,18 @@ import { Config } from '../config/Config';
 export class MediaProcessor {
     private readonly config: Config;
     private readonly duplicateDetection: DuplicateDetectionService;
+    private userId: string | null = null;
 
-    constructor(config: Config, duplicateDetection: DuplicateDetectionService) { ;
+    constructor(config: Config, duplicateDetection: DuplicateDetectionService) {
         this.config = config;
         this.duplicateDetection = duplicateDetection;
+    }
+
+    /**
+     * Set the user ID to avoid downloading own messages
+     */
+    setUserId(userId: string): void {
+        this.userId = userId;
     }
 
     /**
@@ -24,6 +32,12 @@ export class MediaProcessor {
      */
     async processAttachments(messageData: GatewayMessageCreateDispatchData): Promise<void> {
         const { attachments, author, timestamp } = messageData;
+
+        // Check if this is the user's own message
+        if (this.userId && author.id === this.userId) {
+            Logger.info(`⏭️ Skipping own message: ${author.username} (${author.id})`);
+            return;
+        }
         
         // Check if user is blacklisted
         if (this.config.isUserBlacklisted(author.id)) {

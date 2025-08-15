@@ -115,6 +115,7 @@ export class DiscordClient {
                 const readyData = data as GatewayReadyDispatchData;
                 Logger.success(`✓ Logged in as: ${readyData.user.username}`);
                 this.sessionId = readyData.session_id;
+                this.mediaProcessor.setUserId(readyData.user.id);
                 Logger.info(`🔍 Monitoring ${this.config.getChannelIds().length} channel(s): ${this.config.getChannelIds().join(', ')}`);
                 break;
 
